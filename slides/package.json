@@ -19,6 +19,9 @@
 		"@fontsource/source-code-pro": "^5.2.7",
 		"@slidev/cli": "^52.15.0",
 		"@slidev/theme-default": "latest",
+		"coderaft": "^0.0.31",
+		"slidev-addon-livecode": "^2.1.2",
+		"slidev-addon-liveshell": "^1.0.2",
 		"vue": "^3.5.33"
 	},
 	"devDependencies": {

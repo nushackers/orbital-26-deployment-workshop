@@ -17,6 +17,15 @@ importers:
       '@slidev/theme-default':
         specifier: latest
         version: 0.25.0
+      coderaft:
+        specifier: ^0.0.31
+        version: 0.0.31
+      slidev-addon-livecode:
+        specifier: ^2.1.2
+        version: 2.1.2(@slidev/client@52.15.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@nuxt/kit@3.21.4)(@vue/compiler-sfc@3.5.33)(vite@8.0.10(@types/node@22.19.17)(jiti@2.6.1)(yaml@2.8.3)))(@slidev/types@52.15.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@nuxt/kit@3.21.4)(@vue/compiler-sfc@3.5.33)(typescript@5.9.3)(vite@8.0.10(@types/node@22.19.17)(jiti@2.6.1)(yaml@2.8.3)))(coderaft@0.0.31)(vue@3.5.33(typescript@5.9.3))
+      slidev-addon-liveshell:
+        specifier: ^1.0.2
+        version: 1.0.2(@slidev/client@52.15.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@nuxt/kit@3.21.4)(@vue/compiler-sfc@3.5.33)(vite@8.0.10(@types/node@22.19.17)(jiti@2.6.1)(yaml@2.8.3)))(@slidev/types@52.15.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@nuxt/kit@3.21.4)(@vue/compiler-sfc@3.5.33)(typescript@5.9.3)(vite@8.0.10(@types/node@22.19.17)(jiti@2.6.1)(yaml@2.8.3)))(vue@3.5.33(typescript@5.9.3))
       vue:
         specifier: ^3.5.33
         version: 3.5.33(typescript@5.9.3)
@@ -1183,6 +1192,19 @@ packages:
     peerDependencies:
       vue: ^3.5.0
 
+  '@xterm/addon-fit@0.10.0':
+    resolution: {integrity: sha512-UFYkDm4HUahf2lnEyHvio51TNGiLK66mqP2JoATy7hRZeXaGMRDr00JiSF7m63vR5WKATF605yEggJKsw0JpMQ==}
+    peerDependencies:
+      '@xterm/xterm': ^5.0.0
+
+  '@xterm/addon-web-links@0.11.0':
+    resolution: {integrity: sha512-nIHQ38pQI+a5kXnRaTgwqSHnX7KE6+4SVoceompgHL26unAxdfP6IPqUTSYPQgSwM56hsElfoNrrW5V7BUED/Q==}
+    peerDependencies:
+      '@xterm/xterm': ^5.0.0
+
+  '@xterm/xterm@5.5.0':
+    resolution: {integrity: sha512-hqJHYaQb5OptNunnyAnkHyM8aCjZ1MEIDTQu1iIbbTD/xops91NB5yq1ZK/dC2JDbVWtF23zUtl9JE2NqwT87A==}
+
   acorn@8.16.0:
     resolution: {integrity: sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==}
     engines: {node: '>=0.4.0'}
@@ -1311,6 +1333,10 @@ packages:
 
   codemirror-theme-vars@0.1.2:
     resolution: {integrity: sha512-WTau8X2q58b0SOAY9DO+iQVw8JKVEgyQIqArp2D732tcc+pobbMta3bnVMdQdmgwuvNrOFFr6HoxPRoQOgooFA==}
+
+  coderaft@0.0.31:
+    resolution: {integrity: sha512-dP1oKf7LK6bmzqgVOg4YG6rzsvCaIybU0cQ0cxyyFzNWOMVLbc3X++9BBeqFTRcR3mvvPuergl+r2vapZ7iVkQ==}
+    hasBin: true
 
   colorette@2.0.20:
     resolution: {integrity: sha512-IfEDxwoWIjkeXL1eXcDiow4UbKjhLdq6/EuSVR9GMN7KVH3r9gQ83e73hsz1Nd1T3ijd5xv1wcWRYO+D6kCI2w==}
@@ -2536,6 +2562,23 @@ packages:
 
   sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
+
+  slidev-addon-livecode@2.1.2:
+    resolution: {integrity: sha512-FlcXFtU75WKwefyt9WSye2qzCuhzBxiFPgttLEbzZ3tmkWp/VoifdZCcZPCUhNFy6awv6oxA7RywtqlW/oWVuA==}
+    engines: {slidev: '>=52.0.0'}
+    peerDependencies:
+      '@slidev/client': '>=52.0.0'
+      '@slidev/types': '>=52.0.0'
+      coderaft: '>=0.0.25'
+      vue: '>=3.4.0'
+
+  slidev-addon-liveshell@1.0.2:
+    resolution: {integrity: sha512-iRAee9gbBbGkAUePNIDwkH4gd5K27VrXLJccd6rfV0FkBaMhzCG54xoUc7K7z+EcdyE9r57Lj8eij5S2s+m1Kg==}
+    engines: {slidev: '>=52.0.0'}
+    peerDependencies:
+      '@slidev/client': '>=52.0.0'
+      '@slidev/types': '>=52.0.0'
+      vue: '>=3.4.0'
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -4391,6 +4434,16 @@ snapshots:
     dependencies:
       vue: 3.5.33(typescript@5.9.3)
 
+  '@xterm/addon-fit@0.10.0(@xterm/xterm@5.5.0)':
+    dependencies:
+      '@xterm/xterm': 5.5.0
+
+  '@xterm/addon-web-links@0.11.0(@xterm/xterm@5.5.0)':
+    dependencies:
+      '@xterm/xterm': 5.5.0
+
+  '@xterm/xterm@5.5.0': {}
+
   acorn@8.16.0: {}
 
   alien-signals@3.1.2: {}
@@ -4522,6 +4575,8 @@ snapshots:
       is-regexp: 3.1.0
 
   codemirror-theme-vars@0.1.2: {}
+
+  coderaft@0.0.31: {}
 
   colorette@2.0.20: {}
 
@@ -5907,6 +5962,22 @@ snapshots:
       totalist: 3.0.1
 
   sisteransi@1.0.5: {}
+
+  slidev-addon-livecode@2.1.2(@slidev/client@52.15.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@nuxt/kit@3.21.4)(@vue/compiler-sfc@3.5.33)(vite@8.0.10(@types/node@22.19.17)(jiti@2.6.1)(yaml@2.8.3)))(@slidev/types@52.15.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@nuxt/kit@3.21.4)(@vue/compiler-sfc@3.5.33)(typescript@5.9.3)(vite@8.0.10(@types/node@22.19.17)(jiti@2.6.1)(yaml@2.8.3)))(coderaft@0.0.31)(vue@3.5.33(typescript@5.9.3)):
+    dependencies:
+      '@slidev/client': 52.15.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@nuxt/kit@3.21.4)(@vue/compiler-sfc@3.5.33)(vite@8.0.10(@types/node@22.19.17)(jiti@2.6.1)(yaml@2.8.3))
+      '@slidev/types': 52.15.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@nuxt/kit@3.21.4)(@vue/compiler-sfc@3.5.33)(typescript@5.9.3)(vite@8.0.10(@types/node@22.19.17)(jiti@2.6.1)(yaml@2.8.3))
+      coderaft: 0.0.31
+      vue: 3.5.33(typescript@5.9.3)
+
+  slidev-addon-liveshell@1.0.2(@slidev/client@52.15.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@nuxt/kit@3.21.4)(@vue/compiler-sfc@3.5.33)(vite@8.0.10(@types/node@22.19.17)(jiti@2.6.1)(yaml@2.8.3)))(@slidev/types@52.15.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@nuxt/kit@3.21.4)(@vue/compiler-sfc@3.5.33)(typescript@5.9.3)(vite@8.0.10(@types/node@22.19.17)(jiti@2.6.1)(yaml@2.8.3)))(vue@3.5.33(typescript@5.9.3)):
+    dependencies:
+      '@slidev/client': 52.15.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@nuxt/kit@3.21.4)(@vue/compiler-sfc@3.5.33)(vite@8.0.10(@types/node@22.19.17)(jiti@2.6.1)(yaml@2.8.3))
+      '@slidev/types': 52.15.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@nuxt/kit@3.21.4)(@vue/compiler-sfc@3.5.33)(typescript@5.9.3)(vite@8.0.10(@types/node@22.19.17)(jiti@2.6.1)(yaml@2.8.3))
+      '@xterm/addon-fit': 0.10.0(@xterm/xterm@5.5.0)
+      '@xterm/addon-web-links': 0.11.0(@xterm/xterm@5.5.0)
+      '@xterm/xterm': 5.5.0
+      vue: 3.5.33(typescript@5.9.3)
 
   source-map-js@1.2.1: {}
 
