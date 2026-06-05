@@ -1,0 +1,35 @@
+[project]
+name = "vibe-search"
+version = "0.1.0"
+description = "FastAPI color vibe search service for the Orbital deployment workshop"
+readme = "WORKSHOP.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.12",
+    "pydantic-settings>=2.7.1",
+    "sentence-transformers>=4.1.0",
+    "torch>=2.6.0",
+    "uvicorn[standard]>=0.34.2",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=8.3.5",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", marker = "sys_platform == 'linux'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
