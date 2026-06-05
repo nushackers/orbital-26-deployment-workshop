@@ -32,6 +32,704 @@ What we covered in Part 1:
 layout: section
 ---
 
+## Today
+
+- Testing: make sure your app actually works
+- CI/CD: automate testing and deployment
+- Containers: package apps that run anywhere
+- Monitoring: know when things break
+
+<!--
+Here's the roadmap for today. We'll cover four topics, each with a concept section followed by hands-on.
+
+First, testing — we'll write tests for the Color Swipe app you deployed in Part 1. Then CI/CD — we'll automate running those tests and deploying every time you push code. After that, containers — we'll package a Python microservice with Docker. And finally, monitoring — we'll set up Sentry to catch errors in production.
+
+Let's start with testing.
+
+[~1 min]
+-->
+
+---
+layout: section
+---
+
+## Testing
+
+---
+---
+
+# Why test?
+
+<div class="grid grid-cols-2 gap-8 mt-8">
+<div>
+
+## Without tests
+
+- You change something and break a different feature
+- You only find bugs when users report them
+- Refactoring feels dangerous
+- Deploying feels scary
+
+</div>
+<div>
+
+## With tests
+
+- You change something and tests tell you if it broke
+- You catch bugs before they reach production
+- Refactoring is safe: tests are your safety net
+- Deploying is boring: tests already passed
+
+</div>
+</div>
+
+<!--
+Why do we write tests? Because manually checking your app every time you change something doesn't scale.
+
+Without tests, every change is a gamble. You fix a bug in the voting logic but accidentally break the results page. You don't find out until a user reports it. And every time you refactor, you hold your breath.
+
+With tests, you run a command and get instant feedback. Green means good. Red means something broke. You can refactor confidently because the tests tell you exactly what changed.
+
+For a student project, this might feel like overkill. But the earlier you build the habit, the less time you spend debugging at 2 AM before your demo.
+
+[~2 min]
+-->
+
+---
+class: compact
+---
+
+# The testing pyramid
+
+<div class="mt-6 flex flex-col items-center gap-2">
+  <div v-click class="w-48 rounded-t-lg border border-[var(--nus-border)] bg-[color-mix(in_srgb,var(--nus-accent),transparent_85%)] px-4 py-3 text-center shadow-[var(--nus-shadow)]">
+    <div class="font-bold text-[var(--nus-accent)]">E2E tests</div>
+    <div class="nus-token-faint mt-1 text-[0.72rem]">Few · Slow · Real browser</div>
+  </div>
+  <div v-click class="w-72 border border-[var(--nus-border)] bg-[color-mix(in_srgb,var(--nus-success),transparent_88%)] px-4 py-3 text-center shadow-[var(--nus-shadow)]">
+    <div class="font-bold text-[var(--nus-success)]">Integration tests</div>
+    <div class="nus-token-faint mt-1 text-[0.72rem]">Some · Medium speed · Multiple pieces together</div>
+  </div>
+  <div v-click class="w-96 rounded-b-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] px-4 py-3 text-center shadow-[var(--nus-shadow)]">
+    <div class="font-bold text-[var(--nus-text)]">Unit tests</div>
+    <div class="nus-token-faint mt-1 text-[0.72rem]">Many · Fast · One function at a time</div>
+  </div>
+</div>
+
+<!--
+The testing pyramid is a mental model for how many of each type of test to write.
+
+At the bottom: unit tests. These test one function or one module in isolation. They're fast, there are lots of them, and they're cheap to write. Example: does imageUrl("red.svg") return "/api/images/red.svg"?
+
+In the middle: integration tests. These test multiple pieces working together. Example: does the Hono API route actually query Supabase and return the right data?
+
+At the top: end-to-end tests. These test the entire app from the user's perspective using a real browser. They're slow, expensive, and brittle — but they catch real user-facing bugs. Example: does the Color Swipe app load, show cards, and let you swipe?
+
+The pyramid shape tells you the ratio: lots of unit tests, some integration tests, a few E2E tests.
+
+For today's workshop, we'll write one or two of each to give you a feel for all three layers.
+
+[~2 min]
+-->
+
+---
+---
+
+# Vitest
+
+- A testing framework built for **Vite** projects
+- Runs your TypeScript code directly — no separate build step
+- Fast: uses Vite's module resolution and caching
+- API is compatible with Jest (`describe`, `it`, `expect`, `vi.mock`)
+
+```bash
+pnpm test          # run all tests once
+pnpm test:watch    # re-run on file changes
+```
+
+<!--
+We're using Vitest because our app already uses Vite. Vitest plugs directly into Vite's module system, so it understands TypeScript, JSX, and all the imports your app uses — no extra configuration needed.
+
+The API is almost identical to Jest, which is the most popular JavaScript testing framework. If you've seen Jest before, Vitest will feel familiar. If you haven't, don't worry — the API is simple: describe groups your tests, it defines individual test cases, and expect makes assertions.
+
+Let's write some tests.
+
+[~1 min]
+-->
+
+---
+---
+
+<CheckpointBadge />
+
+# Write API unit tests
+
+Open `tests/api/worker.test.ts` and follow along.
+
+We test the Hono API routes using `app.request()` — no server needed:
+
+```ts
+import { describe, expect, it, vi } from "vitest";
+import app from "../../src/worker";
+
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: vi.fn(() => ({
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnValue({
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      }),
+    })),
+  })),
+}));
+
+describe("GET /api/health", () => {
+  it("returns ok status and service name", async () => {
+    const res = await app.request("/api/health");
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, service: "color-swipe" });
+  });
+});
+```
+
+Run the tests:
+
+```bash
+pnpm test
+```
+
+<!--
+Walk through the test file line by line.
+
+app.request() is Hono's built-in test helper. It simulates an HTTP request and returns a Response object — exactly like a real fetch call, but without starting a server.
+
+vi.mock() replaces the Supabase client with a mock. This is critical — we don't want tests hitting a real database. The mock returns empty data, which is fine for testing the route logic.
+
+The describe/it/expect pattern is standard across most testing frameworks. describe groups related tests, it defines a single test case, and expect makes assertions about the result.
+
+Have students run pnpm test and verify all tests pass.
+
+[~5 min, students write and run tests]
+-->
+
+---
+---
+
+<CheckpointBadge />
+
+# Write client tests
+
+Open `tests/client/api.test.ts`.
+
+These test the API helper functions that React components use:
+
+```ts
+import { describe, expect, it } from "vitest";
+import { imageUrl } from "../../src/lib/api";
+
+describe("imageUrl", () => {
+  it("returns the correct API path for a given key", () => {
+    expect(imageUrl("red.svg")).toBe("/api/images/red.svg");
+  });
+
+  it("handles keys with subdirectories", () => {
+    expect(imageUrl("colors/blue.svg")).toBe("/api/images/colors/blue.svg");
+  });
+});
+```
+
+Run all tests:
+
+```bash
+pnpm test
+```
+
+Checkpoint:
+
+- All 5 tests pass (3 API + 2 client)
+
+<!--
+Client tests are the simplest tests to write. They test pure functions — no mocking, no async, no server.
+
+imageUrl is a pure function: given an input, it always returns the same output. These are the easiest things to test and the most valuable — they catch regressions when someone changes a URL pattern.
+
+Have students run pnpm test and verify all 5 tests pass.
+
+[~3 min, students write and run tests]
+-->
+
+---
+---
+
+# Playwright
+
+- An **end-to-end** testing framework that runs real browsers
+- Simulates user interactions: clicks, typing, navigation, drag gestures
+- Catches bugs that unit tests miss: rendering issues, broken layouts, real user flows
+
+```bash
+pnpm exec playwright install --with-deps chromium
+pnpm test:e2e
+```
+
+<!--
+Playwright is different from Vitest. Instead of testing functions in isolation, it opens a real browser, navigates to your app, and interacts with it like a real user.
+
+It can click buttons, type text, scroll pages, and even simulate drag gestures — which is exactly what we need for the swipe cards in Color Swipe.
+
+Playwright automatically starts your dev server before running tests (configured in playwright.config.ts), so you don't need to manually start pnpm dev in another terminal.
+
+For today, we'll write one smoke test: load the page, verify a color card appears, and swipe once.
+
+[~1.5 min]
+-->
+
+---
+---
+
+<CheckpointBadge />
+
+# Write E2E smoke test
+
+Open `tests/e2e/smoke.test.ts`:
+
+```ts
+import { test, expect } from "@playwright/test";
+
+test("smoke test: load page, verify color card, swipe once", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForSelector('[class*="swipe"]', { timeout: 10_000 });
+
+  const card = page.locator('[class*="swipe-card"]').first();
+  await expect(card).toBeVisible();
+
+  const box = await card.boundingBox();
+  if (!box) throw new Error("Card not found");
+
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width + 300, box.y + box.height / 2, { steps: 10 });
+  await page.mouse.up();
+});
+```
+
+Install browsers and run:
+
+```bash
+pnpm exec playwright install --with-deps chromium
+pnpm test:e2e
+```
+
+<!--
+Walk through the test:
+
+1. page.goto("/") opens the app
+2. waitForSelector waits for the swipe UI to render
+3. locator finds the first swipe card
+4. boundingBox gets the card's position and size
+5. The mouse.move/down/move/up sequence simulates a drag gesture to the right — a "like" swipe
+
+The webServer config in playwright.config.ts automatically starts pnpm dev before the test runs.
+
+Have students install Playwright browsers and run the E2E test. The browser will open and they'll see the card swipe automatically.
+
+[~5 min, students install browsers and run E2E]
+-->
+
+---
+layout: section
+---
+
+## CI/CD
+
+---
+---
+
+# Right now, deploying looks like this
+
+<div class="mt-8 flex flex-col items-center gap-3 text-[0.88rem]">
+  <div v-click class="w-80 rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] px-4 py-3 text-center shadow-[var(--nus-shadow)]">
+    <span class="font-bold">1.</span> You finish coding
+  </div>
+  <div v-click class="nus-token-accent text-xl font-bold">&darr;</div>
+  <div v-click class="w-80 rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] px-4 py-3 text-center shadow-[var(--nus-shadow)]">
+    <span class="font-bold">2.</span> You remember to run tests <span class="nus-token-faint">(maybe)</span>
+  </div>
+  <div v-click class="nus-token-accent text-xl font-bold">&darr;</div>
+  <div v-click class="w-80 rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] px-4 py-3 text-center shadow-[var(--nus-shadow)]">
+    <span class="font-bold">3.</span> You run <code class="text-[var(--nus-accent)]">pnpm deploy</code> manually
+  </div>
+  <div v-click class="nus-token-accent text-xl font-bold">&darr;</div>
+  <div v-click class="w-80 rounded-lg border border-[var(--nus-border)] bg-[color-mix(in_srgb,var(--nus-warning),transparent_88%)] px-4 py-3 text-center shadow-[var(--nus-shadow)]">
+    <span class="font-bold text-[var(--nus-warning)]">4.</span> <span class="text-[var(--nus-warning)]">You forget step 2 or 3 at some point</span>
+  </div>
+</div>
+
+<!--
+In Part 1, you deployed manually. You ran pnpm deploy from your terminal, and Wrangler uploaded your app to Cloudflare.
+
+That works fine for a single developer. But what happens when you have a team? What if someone pushes broken code? What if you forget to test before deploying? What if you're sick and your teammate needs to deploy but doesn't know the steps?
+
+Manual deploys are fragile. They rely on you remembering every step, every time. And humans are bad at remembering things.
+
+The solution: let a machine do it. Every time you push code, a machine runs the tests and deploys for you. That's CI/CD.
+
+[~2 min]
+-->
+
+---
+---
+
+# What is CI?
+
+**Continuous Integration**: automatically test your code every time you change it.
+
+<div class="mt-6 grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-3 text-center text-[0.82rem]">
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-3 shadow-[var(--nus-shadow)]">
+    <div class="font-bold">You push code</div>
+    <div class="nus-token-faint mt-1">git push</div>
+  </div>
+  <div v-click class="nus-token-accent text-2xl font-bold">&rarr;</div>
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[color-mix(in_srgb,var(--nus-success),transparent_88%)] p-3 shadow-[var(--nus-shadow)]">
+    <div class="font-bold text-[var(--nus-success)]">Tests run automatically</div>
+    <div class="nus-token-faint mt-1">unit + client + E2E</div>
+  </div>
+  <div v-click class="nus-token-accent text-2xl font-bold">&rarr;</div>
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-3 shadow-[var(--nus-shadow)]">
+    <div class="font-bold">You see results</div>
+    <div class="nus-token-faint mt-1">pass or fail</div>
+  </div>
+</div>
+
+<v-clicks>
+
+## Why it matters
+
+- You never forget to run tests — the machine doesn't forget
+- Broken code is caught immediately, not days later
+- Your team can see whether the codebase is healthy at a glance
+
+</v-clicks>
+
+<!--
+Continuous Integration answers the question: "did my change break anything?"
+
+Every time you push code to GitHub, a CI system picks up your code, installs dependencies, and runs your test suite. If all tests pass, you get a green checkmark. If any test fails, you get a red X and the exact error message.
+
+The "continuous" part means it happens on every push — not just when you remember. This catches bugs early, when they're cheap to fix.
+
+For your Orbital project, this means you can push code confidently at 1 AM and know that if something broke, you'll see it immediately — not when your advisor tries the demo next week.
+
+[~2 min]
+-->
+
+---
+---
+
+# What is CD?
+
+**Continuous Deployment**: automatically deploy your code every time tests pass.
+
+<div class="mt-6 grid grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] items-center gap-3 text-center text-[0.82rem]">
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-3 shadow-[var(--nus-shadow)]">
+    <div class="font-bold">Push code</div>
+  </div>
+  <div v-click class="nus-token-accent text-xl font-bold">&rarr;</div>
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[color-mix(in_srgb,var(--nus-success),transparent_88%)] p-3 shadow-[var(--nus-shadow)]">
+    <div class="font-bold text-[var(--nus-success)]">Tests pass</div>
+  </div>
+  <div v-click class="nus-token-accent text-xl font-bold">&rarr;</div>
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[color-mix(in_srgb,var(--nus-accent),transparent_85%)] p-3 shadow-[var(--nus-shadow)]">
+    <div class="font-bold text-[var(--nus-accent)]">Deploy automatically</div>
+  </div>
+  <div v-click class="nus-token-accent text-xl font-bold">&rarr;</div>
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-3 shadow-[var(--nus-shadow)]">
+    <div class="font-bold">Live in production</div>
+  </div>
+</div>
+
+<v-clicks>
+
+## Why it matters
+
+- Deploying becomes boring and predictable
+- No one needs to remember the deploy steps
+- Your production always matches your latest tested code
+
+</v-clicks>
+
+<!--
+Continuous Deployment takes CI one step further. After tests pass, the system automatically deploys your code to production. No human intervention needed.
+
+The "continuous" part means your production app is always up to date with the latest tested code. You push, tests run, code deploys. It's a pipeline.
+
+Some teams use "Continuous Delivery" instead, which means the deploy is one click away but not fully automatic. For student projects, full Continuous Deployment is fine — your production environment is low-stakes.
+
+Together, CI/CD means: push code, tests run, code deploys. You just write code and push. Everything else is automatic.
+
+[~2 min]
+-->
+
+---
+---
+
+# GitHub Actions
+
+GitHub's built-in CI/CD platform. No extra tools to install.
+
+<div class="mt-6 grid grid-cols-2 gap-4 text-[0.82rem]">
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-4 shadow-[var(--nus-shadow)]">
+    <div class="font-bold text-[var(--nus-accent)]">Workflow</div>
+    <div class="nus-token-faint mt-1">A YAML file in <code>.github/workflows/</code> that defines the entire pipeline</div>
+  </div>
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-4 shadow-[var(--nus-shadow)]">
+    <div class="font-bold text-[var(--nus-accent)]">Job</div>
+    <div class="nus-token-faint mt-1">A set of steps that run on a fresh virtual machine (e.g., <code>ubuntu-latest</code>)</div>
+  </div>
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-4 shadow-[var(--nus-shadow)]">
+    <div class="font-bold text-[var(--nus-accent)]">Step</div>
+    <div class="nus-token-faint mt-1">A single command or action within a job (e.g., <code>pnpm test</code>)</div>
+  </div>
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-4 shadow-[var(--nus-shadow)]">
+    <div class="font-bold text-[var(--nus-accent)]">Trigger</div>
+    <div class="nus-token-faint mt-1">The event that starts the workflow (e.g., <code>push</code>, <code>pull_request</code>)</div>
+  </div>
+</div>
+
+<!--
+GitHub Actions is GitHub's built-in CI/CD platform. You don't need to install anything or sign up for a separate service. It's already available in every GitHub repository.
+
+The core concepts are simple:
+
+A workflow is a YAML file that lives in your repo under .github/workflows/. It defines what happens and when.
+
+A job is a collection of steps that run on a fresh virtual machine. Each job gets its own clean environment — nothing from your laptop, nothing from previous runs.
+
+A step is a single command or action. It could be checking out your code, installing dependencies, running tests, or deploying.
+
+A trigger is the event that starts the workflow. Common triggers: pushing to a branch, opening a pull request, or a scheduled cron job.
+
+Let's look at what a workflow looks like for our Color Swipe app.
+
+[~2 min]
+-->
+
+---
+class: compact scrollable-code
+---
+
+# Our workflow
+
+```yaml
+name: Color Swipe CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: part-2/apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install
+      - run: pnpm test
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: part-2/apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install
+      - run: pnpm deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+```
+
+<!--
+Let's walk through this workflow line by line.
+
+The trigger: it runs on push to main AND on pull requests targeting main. This means PRs get tested but not deployed. Only pushes to main trigger the deploy.
+
+The test job: it checks out the code, sets up pnpm and Node.js, installs dependencies, runs Vitest, installs Playwright browsers, and runs E2E tests. The Supabase credentials come from GitHub secrets.
+
+The deploy job: it has "needs: test" — meaning it only runs after the test job passes. And "if: github.ref == 'refs/heads/main'" — meaning it only runs on pushes to main, not on PRs. It deploys using pnpm deploy with the Cloudflare API token from secrets.
+
+Notice the working-directory setting. Since our app lives in part-2/apps/web, every command runs from that directory.
+
+[~3 min]
+-->
+
+---
+---
+
+# Secrets in GitHub Actions
+
+Your workflow needs credentials to deploy. **Never put secrets in code.**
+
+<div class="mt-6 grid grid-cols-2 gap-6 text-[0.82rem]">
+<div>
+
+## Where to add them
+
+<v-clicks>
+
+1. Your fork on GitHub
+2. **Settings** → **Secrets and variables** → **Actions**
+3. **New repository secret**
+
+</v-clicks>
+
+</div>
+<div>
+
+## What to add
+
+<v-clicks>
+
+- `CLOUDFLARE_API_TOKEN` — deploy permission
+- `SUPABASE_URL` — your project URL
+- `SUPABASE_KEY` — your publishable key
+
+</v-clicks>
+
+</div>
+</div>
+
+<v-click>
+
+Secrets are accessed as `${{ secrets.SECRET_NAME }}` in the workflow YAML.
+
+</v-click>
+
+<!--
+Secrets in GitHub Actions work like wrangler secrets — they're encrypted values that your workflow can access but no one can read.
+
+You add them in your repository settings. Once added, they're available to all workflows as ${{ secrets.SECRET_NAME }}.
+
+For our workflow, we need three secrets: the Cloudflare API token for deploying, and the Supabase URL and key for the E2E tests to work.
+
+The Cloudflare API token is different from what you used with wrangler login. You need to create one in the Cloudflare dashboard with Workers deploy permissions.
+
+[~2 min]
+-->
+
+---
+---
+
+<CheckpointBadge />
+
+# Fill in the workflow template
+
+Open `.github/workflows/deploy-color-swipe.yml` in your repo.
+
+It has `____` blanks for you to fill in. Use what you just learned:
+
+- **Triggers**: which branches should trigger the workflow?
+- **Test steps**: what commands run the tests?
+- **Deploy condition**: when should the deploy job run?
+- **Deploy step**: what command deploys to Cloudflare?
+
+<!--
+Have students open the workflow template and fill in the blanks.
+
+Walk around and help. The answers are:
+- branches: [main] for both push and pull_request
+- pnpm test for running tests
+- pnpm exec playwright install --with-deps chromium for installing browsers
+- pnpm test:e2e for running E2E tests
+- if: github.ref == 'refs/heads/main' for the deploy condition
+- pnpm deploy for the deploy step
+
+[~5 min, students fill in the template]
+-->
+
+---
+---
+
+<CheckpointBadge />
+
+# Configure secrets
+
+Add three secrets to your GitHub repository:
+
+| Secret name | Where to get it |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | [Cloudflare dashboard → API Tokens](https://dash.cloudflare.com/profile/api-tokens) → Edit Cloudflare Workers template |
+| `SUPABASE_URL` | Supabase dashboard → Settings → API |
+| `SUPABASE_KEY` | Supabase dashboard → Settings → API |
+
+Go to your fork → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+
+<!--
+Walk students through creating the Cloudflare API token.
+
+The Edit Cloudflare Workers template gives you a token with the right permissions. Copy the token value and add it as a secret in GitHub.
+
+For Supabase, use the same URL and publishable key you used in Part 1.
+
+[~5 min, students configure secrets]
+-->
+
+---
+---
+
+<CheckpointBadge />
+
+# Push and trigger the pipeline
+
+Commit the completed workflow and push to `main`:
+
+```bash
+git add .github/workflows/deploy-color-swipe.yml
+git commit -m "ci: add CI/CD pipeline for color-swipe"
+git push origin main
+```
+
+Then go to your fork on GitHub → **Actions** tab.
+
+Checkpoint:
+
+- The workflow appears in the Actions tab
+- The `test` job runs and all tests pass
+- The `deploy` job runs and deploys to Cloudflare Workers
+- Your app is live at the same `workers.dev` URL from Part 1
+
+<!--
+Have students push and watch the pipeline run in the GitHub Actions tab.
+
+The first run might take a few minutes because of pnpm install and Playwright browser installation. Subsequent runs will be faster thanks to caching.
+
+If the deploy fails, check that the CLOUDFLARE_API_TOKEN secret is set correctly. If tests fail, check the logs for the specific error.
+
+[~5 min, students push and verify pipeline]
+-->
+
+---
+layout: section
+---
+
 ## Containers
 
 ---
@@ -728,6 +1426,8 @@ class: compact stacked-cicd scrollable-code
 
 # CI/CD for containers
 
+Same pattern as the Color Swipe workflow — but this time we build and push a Docker image instead of deploying to Workers.
+
 ```yaml {*}{maxHeight:'50vh'}
 # .github/workflows/deploy-vibe-search.yml
 name: Deploy Vibe Search
@@ -1027,6 +1727,7 @@ Hit the endpoint. Within seconds, the error shows up in your Sentry dashboard wi
 
 ## Part 2
 
+- Tests with Vitest and Playwright
 - CI/CD with GitHub Actions
 - Containerized Python microservice
 - Deployed to Render
