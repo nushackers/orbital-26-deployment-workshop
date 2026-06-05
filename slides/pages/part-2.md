@@ -478,7 +478,7 @@ class: live-terminal-slide
 <!--
 Demo script:
 
-cd ../vibe-search
+cd part-2/apps/vibe-search
 docker build -t color-vibe-search .
 docker run -p 8000:8000 color-vibe-search
 
@@ -729,31 +729,45 @@ class: compact stacked-cicd scrollable-code
 # CI/CD for containers
 
 ```yaml {*}{maxHeight:'50vh'}
-# .github/workflows/deploy-vibe-search.yml
-name: Deploy Vibe Search
+# .github/workflows/test-vibe-search.yaml
+name: Test Vibe Search
 on:
+  workflow_dispatch:
   push:
-    branches: [main]
-    paths: ["vibe-search/**"]
+    branches: [main, master]
+    paths:
+      - "part-2/apps/vibe-search/**"
+      - ".github/workflows/test-vibe-search.yaml"
+  pull_request:
+    paths:
+      - "part-2/apps/vibe-search/**"
+      - ".github/workflows/test-vibe-search.yaml"
+
+permissions:
+  contents: read
 
 jobs:
-  build-and-push:
+  test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    defaults:
+      run:
+        working-directory: part-2/apps/vibe-search
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.2.0
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
+          enable-cache: true
+          cache-dependency-glob: part-2/apps/vibe-search/uv.lock
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          context: ./vibe-search
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/color-vibe-search:latest
+          python-version: "3.12"
+
+      - run: uv sync --dev --frozen
+      - run: uv run pytest
 ```
 
 
@@ -789,7 +803,7 @@ In production, each service runs on its own platform (Workers, Render, Supabase)
 ```yaml
 services:
   vibe-search:
-    build: ./vibe-search
+    build: ./part-2/apps/vibe-search
     ports:
       - "8000:8000"
 
@@ -812,7 +826,7 @@ volumes:
 
 # What Compose gives you
 
-- **`build: ./vibe-search`**: builds the Dockerfile for you
+- **`build: ./part-2/apps/vibe-search`**: builds the Dockerfile for you
 - **`image: postgres:16`**: pulls a pre-built image (this is what Supabase runs under the hood)
 - **`volumes`**: named volumes persist data across container restarts
 - **Networking**: services in the same Compose file can reach each other by name (`postgres:5432`)
@@ -1074,6 +1088,79 @@ Everything we clicked through today (Supabase project, Render service, Cloudflar
 
 
 ---
+class: compact stacked-cicd scrollable-code
+---
+
+# Appendix: Full container CD
+
+```yaml {*}{maxHeight:'50vh'}
+# .github/workflows/deploy-vibe-search.yaml
+name: Deploy Vibe Search
+
+on:
+  workflow_dispatch:
+  # Uncomment this block to deploy automatically when main changes.
+  # push:
+  #   branches: [main, master]
+  #   paths:
+  #     - "part-2/apps/vibe-search/**"
+  #     - ".github/workflows/deploy-vibe-search.yaml"
+
+jobs:
+  test:
+    ...
+
+  build-and-push:
+    needs: test
+    steps:
+      - uses: docker/build-push-action@v6.9.0
+        with:
+          context: ./part-2/apps/vibe-search
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ghcr.io/<owner>/color-vibe-search:latest
+            ghcr.io/<owner>/color-vibe-search:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    steps:
+      - run: curl --fail --request POST "$RENDER_DEPLOY_HOOK_URL"
+```
+
+<!--
+This is appendix material. Use it only if there is time after the main Render flow.
+
+The real workflow in the repo includes the full test job, GHCR login, Buildx setup, and Render deploy hook call.
+-->
+
+---
+---
+
+# Appendix: What changes in Render?
+
+The main workshop flow uses a **Git-backed Render service**:
+
+- Render pulls your repo
+- Render builds from `part-2/apps/vibe-search/Dockerfile`
+- Render redeploys from Git
+
+The full CD flow uses an **image-backed Render service**:
+
+- GitHub Actions builds the image
+- GHCR stores the image
+- Render pulls that exact image
+- `RENDER_DEPLOY_HOOK_URL` triggers the deploy
+
+<!--
+Render deploy hook URL lives in Render service Settings.
+Save it as a GitHub Actions secret named RENDER_DEPLOY_HOOK_URL.
+
+The deploy workflow passes imgURL so Render deploys the commit-tagged image, not just whatever latest happens to mean.
+If the GHCR package is private, either make it public or configure private registry credentials in Render.
+-->
+
+---
 ---
 
 # Appendix: Docker platform quirks
@@ -1111,5 +1198,3 @@ The `--platform` flag tells Docker which CPU architecture to target. Without it,
 - **NVIDIA**: use NVIDIA Container Toolkit, run with `--gpus all`
 - **Mac**: no Metal passthrough (Docker runs in a Linux VM). Use MLX or run natively.
 - **Cloud GPUs**: Google Cloud Run, RunPod, Modal, Vast.ai for GPU containers on demand
-
-
