@@ -1,0 +1,76 @@
+name: Color Swipe CI/CD
+
+# TODO: Configure triggers
+# - Run on push to main
+# - Run on pull requests targeting main
+on:
+  push:
+    branches: [____]
+  pull_request:
+    branches: [____]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: part-2/apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: part-2/apps/web/pnpm-lock.yaml
+
+      - run: pnpm install
+
+      # TODO: Run unit and client tests
+      - name: Run tests
+        run: ____
+
+      # TODO: Install Playwright browsers and run E2E tests
+      - name: Install Playwright browsers
+        run: ____
+
+      - name: Run E2E tests
+        run: ____
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+  deploy:
+    needs: test
+    # TODO: Only deploy when pushing to main (not on PRs)
+    if: ____
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: part-2/apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: part-2/apps/web/pnpm-lock.yaml
+
+      - run: pnpm install
+
+      # TODO: Deploy to Cloudflare Workers
+      - name: Deploy
+        run: ____
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
