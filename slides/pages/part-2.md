@@ -676,13 +676,12 @@ The browser never talks to Render directly. The Worker acts as a proxy.
 
 - Problem: `vibe-search` is still public if someone knows the Render URL
 - Consequence (worse case): api bills go brrr
-Good options:
-
-- **Private networking**: backend + `vibe-search` on the same private network
-- **API Gateway**: put a gateway in front for auth, rate limits, logging, and routing
-- **Internal API key**: Worker sends a secret header; FastAPI rejects missing/wrong keys
-- **Rate limits + input limits**: cap request size, prompt length, timeout, and calls/user
-- **Do not rely on CORS**: CORS does not stop direct `curl`
+- Good options:
+  - **Private networking**: backend + `vibe-search` on the same private network
+  - **API Gateway**: put a gateway in front for auth, rate limits, logging, and routing
+  - **Internal API key**: Worker sends a secret header; FastAPI rejects missing/wrong keys
+  - **Rate limits + input limits**: cap request size, prompt length, timeout, and calls/user
+  - **Do not rely on CORS**: CORS does not stop direct `curl`
 
 
 ---
