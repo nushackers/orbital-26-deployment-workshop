@@ -3,7 +3,7 @@ name: Deploy workshop slides
 on:
   workflow_dispatch:
   push:
-    branches: [main, master]
+    branches: [main]
     paths:
       - "slides/**"
 

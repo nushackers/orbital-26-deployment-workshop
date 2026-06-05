@@ -3,7 +3,7 @@ name: Test Vibe Search
 on:
   workflow_dispatch:
   push:
-    branches: [main, master]
+    branches: [main]
     paths:
       - "part-2/apps/vibe-search/**"
       - ".github/workflows/test-vibe-search.yaml"

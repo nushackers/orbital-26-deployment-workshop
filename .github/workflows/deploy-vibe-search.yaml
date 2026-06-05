@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   # Uncomment this block to deploy automatically when main changes.
   # push:
-  #   branches: [main, master]
+  #   branches: [main]
   #   paths:
   #     - "part-2/apps/vibe-search/**"
   #     - ".github/workflows/deploy-vibe-search.yaml"
