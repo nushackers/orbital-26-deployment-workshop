@@ -607,9 +607,10 @@ Checkpoint:
 
 
 ---
+class: compact
 ---
 
-# Connect to color-swipe
+# Connect to color-swipe: secrets
 
 Add the Render URL and an internal API key as Cloudflare Worker secrets:
 
@@ -624,7 +625,18 @@ pnpm wrangler secret put VIBE_SEARCH_API_KEY
 # paste the generated value
 ```
 
-Add a proxy route in `src/worker.ts`:
+<!--
+This is a workshop action slide. Give everyone a moment to generate the key,
+then remind them the same generated value must be configured in Render too.
+-->
+
+---
+class: compact
+---
+
+# Connect to color-swipe: proxy route
+
+Add this route in `src/worker.ts`:
 
 ```ts
 app.post("/api/vibe-search", async (c) => {
