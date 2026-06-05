@@ -45,11 +45,7 @@
 <script setup lang="ts">
 const containerApps = ["App A", "App B", "App C", "App D", "App E", "App F"];
 
-const vmApps = [
-  { app: "App A" },
-  { app: "App B" },
-  { app: "App C" },
-];
+const vmApps = [{ app: "App A" }, { app: "App B" }, { app: "App C" }];
 </script>
 
 <style scoped>

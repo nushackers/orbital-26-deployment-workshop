@@ -26,38 +26,38 @@
 
 <script setup lang="ts">
 const layers = [
-  {
-    id: "desktop",
-    label: "Desktop app",
-    description: "Optional on Mac / Windows",
-    tone: "tooling",
-    options: ["Docker Desktop", "OrbStack"],
-    hint: "Pick one. All give you the same docker command.",
-  },
-  {
-    id: "cli",
-    label: "CLI",
-    description: "The docker command you type",
-    tone: "cli",
-    options: ["docker build", "docker run", "docker compose"],
-    hint: "Talks to whatever runtime is installed.",
-  },
-  {
-    id: "engine",
-    label: "Engine / Runtime",
-    description: "Actually starts and manages containers",
-    tone: "engine",
-    options: ["Docker Engine", "Podman", "containerd"],
-    hint: "Swappable. Same images, different daemon.",
-  },
-  {
-    id: "standard",
-    label: "Standard",
-    description: "OCI image format",
-    tone: "standard",
-    options: ["Docker Hub", "GHCR"],
-    hint: "Why images built here run on Render, Kubernetes, Podman.",
-  },
+	{
+		id: "desktop",
+		label: "Desktop app",
+		description: "Optional on Mac / Windows",
+		tone: "tooling",
+		options: ["Docker Desktop", "OrbStack"],
+		hint: "Pick one. All give you the same docker command.",
+	},
+	{
+		id: "cli",
+		label: "CLI",
+		description: "The docker command you type",
+		tone: "cli",
+		options: ["docker build", "docker run", "docker compose"],
+		hint: "Talks to whatever runtime is installed.",
+	},
+	{
+		id: "engine",
+		label: "Engine / Runtime",
+		description: "Actually starts and manages containers",
+		tone: "engine",
+		options: ["Docker Engine", "Podman", "containerd"],
+		hint: "Swappable. Same images, different daemon.",
+	},
+	{
+		id: "standard",
+		label: "Standard",
+		description: "OCI image format",
+		tone: "standard",
+		options: ["Docker Hub", "GHCR"],
+		hint: "Why images built here run on Render, Kubernetes, Podman.",
+	},
 ] as const;
 </script>
 
