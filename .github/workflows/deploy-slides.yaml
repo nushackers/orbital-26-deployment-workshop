@@ -3,7 +3,7 @@ name: Deploy workshop slides
 on:
   workflow_dispatch:
   push:
-    branches: [main, master]
+    branches: [main]
     paths:
       - "slides/**"
 
@@ -37,8 +37,8 @@ jobs:
       - name: Setup Biome
         uses: biomejs/setup-biome@v2
         with:
-          version: latest
-          working-directory: slides
+          version: 2.4.14
+          working-dir: slides
           
       - name: Run Biome
         run: biome ci .
@@ -48,10 +48,19 @@ jobs:
         run: nr build --base /${{github.event.repository.name}}/
         working-directory: slides
 
+      - name: Verify build output (act)
+        if: env.ACT
+        run: |
+          test -d slides/dist
+          test -f slides/dist/index.html
+          echo "Build artifact ready (Pages upload skipped under act)"
+
       - name: Setup Pages
+        if: ${{ !env.ACT }}
         uses: actions/configure-pages@v4
 
       - uses: actions/upload-pages-artifact@v3
+        if: ${{ !env.ACT }}
         with:
           path: slides/dist
 
@@ -67,5 +76,6 @@ jobs:
     name: Deploy
     steps:
       - name: Deploy to GitHub Pages
+        if: ${{ !env.ACT }}
         id: deployment
         uses: actions/deploy-pages@v4

@@ -1,0 +1,100 @@
+name: Deploy Vibe Search
+
+on:
+  workflow_dispatch:
+  # Uncomment this block to deploy automatically when main changes.
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - "part-2/apps/vibe-search/**"
+  #     - ".github/workflows/deploy-vibe-search.yaml"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: part-2/apps/vibe-search
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: part-2/apps/vibe-search/uv.lock
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --dev --frozen
+
+      - name: Run tests
+        run: uv run pytest
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: test
+
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image name
+        id: image
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/color-vibe-search"
+          echo "IMAGE_NAME=$image" >> "$GITHUB_ENV"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.9.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6.9.0
+        with:
+          context: ./part-2/apps/vibe-search
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Trigger Render deploy
+        env:
+          IMAGE_URL: ${{ needs.build-and-push.outputs.image }}:${{ github.sha }}
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "Missing RENDER_DEPLOY_HOOK_URL secret"
+            exit 1
+          fi
+
+          curl --fail --show-error --request POST \
+            --get --data-urlencode "imgURL=$IMAGE_URL" \
+            "$RENDER_DEPLOY_HOOK_URL"

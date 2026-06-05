@@ -8,7 +8,6 @@ interface App {
 	annotation?: string;
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: used in <template> via v-for
 const apps: App[] = [
 	{
 		name: "Calculator",

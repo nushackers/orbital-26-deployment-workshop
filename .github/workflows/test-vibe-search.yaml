@@ -1,0 +1,44 @@
+name: Test Vibe Search
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "part-2/apps/vibe-search/**"
+      - ".github/workflows/test-vibe-search.yaml"
+  pull_request:
+    paths:
+      - "part-2/apps/vibe-search/**"
+      - ".github/workflows/test-vibe-search.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: part-2/apps/vibe-search
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: part-2/apps/vibe-search/uv.lock
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --dev --frozen
+
+      - name: Run tests
+        run: uv run pytest
