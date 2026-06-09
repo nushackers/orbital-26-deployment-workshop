@@ -151,3 +151,6 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+# Context directory (local agent notes, not committed)
+.context/
+.wrangler/

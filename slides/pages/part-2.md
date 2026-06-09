@@ -22,12 +22,13 @@ What we covered in Part 1:
 - Deploying a web application from localhost to the internet
 - Serverless deployment on Cloudflare Workers
 - Connecting Supabase for database and file storage
-        
-<!-- Putt: Testing, CI/CD | Tien Cheng: Containers, Monitoring
+
+<!--
+Putt: Testing, CI/CD | Tien Cheng: Containers, Monitoring
 
 Okay, welcome back everyone. So last week we went through how to take your app from localhost to the internet, right? We deployed a React app on Cloudflare Workers, connected Supabase for database and file storage, and at the end you had a public URL that anyone can access.
 
-Today we're building on top of that. Putt will go through testing and CI/CD first, then I'll take over for containers and monitoring.
+Today we're building on top of that.
 
 [~1 min]
 -->
@@ -671,9 +672,6 @@ layout: section
     <span class="font-bold text-[var(--nus-warning)]">4.</span> <span class="text-[var(--nus-warning)]">You forget step 2 or 3 at some point</span>
   </div>
 </div>
-<div v-click>
-  <img src="/fake-slack-ai-slop.webp" alt="Fake deployment reminder chat" class="w-full max-h-76 object-contain" />
-</div>
 </div>
 
 <!--
@@ -1056,6 +1054,197 @@ First run might take a few minutes because it needs to install everything from s
 If the deploy fails, check the CLOUDFLARE_API_TOKEN secret. If tests fail, click into the job logs to see what happened.
 
 [~5 min, students push and verify pipeline]
+-->
+
+---
+layout: section
+---
+
+## This is just the start
+
+<!--
+Quick pause before we move to containers.
+
+What we just built is intentionally small: a few tests, one GitHub Actions workflow, one automatic deployment. That is enough to be useful for an Orbital project, but testing and CI/CD are both much bigger topics in real teams.
+
+I want to show you the map so you know what exists beyond today's workshop.
+
+[~30 sec]
+-->
+
+---
+class: compact
+---
+
+# Testing: what we did vs what teams add
+
+<div class="mt-5 grid grid-cols-2 gap-5 text-[0.78rem]">
+<div class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-4 shadow-[var(--nus-shadow)]">
+
+## Today
+
+- Unit test for a URL helper
+- Integration test for API routes
+- One E2E smoke test
+- Mocked external services
+- Run tests locally and in CI
+
+</div>
+<div class="rounded-lg border border-[var(--nus-border)] bg-[color-mix(in_srgb,var(--nus-accent),transparent_90%)] p-4 shadow-[var(--nus-shadow)]">
+
+## Later
+
+- Test data factories and fixtures
+- Visual regression tests
+- Accessibility tests
+- Contract tests between services
+- Coverage thresholds
+- Flaky test quarantine
+
+</div>
+</div>
+
+<!--
+Today we covered the core loop: write tests, run tests, use CI to stop broken code from deploying.
+
+But real test suites grow extra machinery around that loop.
+
+Fixtures and factories help you create repeatable test data without copying giant objects everywhere. Visual regression tests compare screenshots so you catch accidental UI changes. Accessibility tests check things like labels, contrast, and keyboard navigation.
+
+Contract tests matter once you have multiple services. For example, our Worker expects Vibe Search to return `{ query, model, results }`. A contract test can catch breaking API changes before deployment.
+
+Coverage thresholds are useful, but don't worship the number. 90 percent coverage with bad tests is worse than 60 percent coverage around important flows. Coverage tells you what code ran, not whether the assertions were meaningful.
+
+Flaky test quarantine is a real thing in teams: if a test sometimes fails for no product reason, you either fix it quickly or isolate it, because flaky tests train people to ignore red builds.
+
+[~3 min]
+-->
+
+---
+class: compact
+---
+
+# CI/CD: what we did vs what teams add
+
+<div class="mt-5 grid grid-cols-2 gap-5 text-[0.78rem]">
+<div class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-4 shadow-[var(--nus-shadow)]">
+
+## Today
+
+- Run on push and pull request
+- Install dependencies
+- Run Vitest and Playwright
+- Deploy only after tests pass
+- Store credentials as secrets
+
+</div>
+<div class="rounded-lg border border-[var(--nus-border)] bg-[color-mix(in_srgb,var(--nus-success),transparent_90%)] p-4 shadow-[var(--nus-shadow)]">
+
+## Later
+
+- Required checks before merge
+- Preview deployments per PR
+- Staging and production environments
+- Manual approvals for risky deploys
+- Rollbacks and release tags
+- Build artifacts and caches
+
+</div>
+</div>
+
+<!--
+Same thing for CI/CD. Today we made a basic pipeline: push code, run tests, deploy if green.
+
+In real projects, the pipeline becomes part of the team's safety system.
+
+Required checks mean GitHub will not let you merge unless the tests pass. Preview deployments give every pull request its own temporary URL, so reviewers can click around before merging.
+
+Staging and production environments let you test against a production-like setup without affecting real users. Some teams deploy automatically to staging but require manual approval for production.
+
+Rollbacks matter because even tested code can break in production. A good deployment process should answer: what version is live, what changed, and how do we go back quickly?
+
+Artifacts and caches are about speed and repeatability. Instead of rebuilding the same thing repeatedly, you can build once, store the output, test that exact output, then deploy that exact output.
+
+[~3 min]
+-->
+
+---
+class: compact
+---
+
+# Where to spend effort first
+
+<div class="mt-5 grid grid-cols-[1fr_1fr_1fr] gap-4 text-[0.76rem]">
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-4 shadow-[var(--nus-shadow)]">
+    <div class="mb-2 text-lg font-bold text-[var(--nus-text)]">1. Critical paths</div>
+    <div>Test the flows that would ruin your demo if they broke.</div>
+    <div class="mt-3 nus-token-faint">Login, payment, upload, booking, search, deploy.</div>
+  </div>
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-4 shadow-[var(--nus-shadow)]">
+    <div class="mb-2 text-lg font-bold text-[var(--nus-text)]">2. Boundaries</div>
+    <div>Test where your app talks to other systems.</div>
+    <div class="mt-3 nus-token-faint">Database, storage, AI service, email, payment API.</div>
+  </div>
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-4 shadow-[var(--nus-shadow)]">
+    <div class="mb-2 text-lg font-bold text-[var(--nus-text)]">3. Automation</div>
+    <div>Run the same checks every time without relying on memory.</div>
+    <div class="mt-3 nus-token-faint">CI checks, branch protection, deploy gates.</div>
+  </div>
+</div>
+
+<!--
+If this feels like a lot, here is the practical order.
+
+First, test critical paths. For your Orbital project, ask: what would be embarrassing if it broke during Splashdown or a live demo? Start there.
+
+Second, test boundaries. Bugs often happen where systems meet: frontend to backend, backend to database, Worker to Render, app to Supabase.
+
+Third, automate the checks. A test that only runs when you remember is useful, but a test that runs on every PR is much more useful.
+
+Do not try to build a huge enterprise process for a student project. Build the smallest safety net that catches the bugs you are actually likely to ship.
+
+[~2 min]
+-->
+
+---
+class: compact
+---
+
+# A good pipeline answers four questions
+
+<div class="mt-6 grid grid-cols-2 gap-4 text-[0.82rem]">
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-4 shadow-[var(--nus-shadow)]">
+    <div class="font-bold text-[var(--nus-accent)]">Is it correct?</div>
+    <div class="nus-token-faint mt-1">Tests, type checks, linting, security scans</div>
+  </div>
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-4 shadow-[var(--nus-shadow)]">
+    <div class="font-bold text-[var(--nus-accent)]">Can we ship it?</div>
+    <div class="nus-token-faint mt-1">Builds, environment config, deploy credentials</div>
+  </div>
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-4 shadow-[var(--nus-shadow)]">
+    <div class="font-bold text-[var(--nus-accent)]">What changed?</div>
+    <div class="nus-token-faint mt-1">Commits, release notes, artifacts, version tags</div>
+  </div>
+  <div v-click class="rounded-lg border border-[var(--nus-border)] bg-[var(--nus-surface)] p-4 shadow-[var(--nus-shadow)]">
+    <div class="font-bold text-[var(--nus-accent)]">Can we recover?</div>
+    <div class="nus-token-faint mt-1">Rollbacks, alerts, logs, monitoring</div>
+  </div>
+</div>
+
+<!--
+This is the broader mental model for CI/CD.
+
+First: is it correct? That is tests, type checks, linting, maybe security scans.
+
+Second: can we ship it? That is whether the app builds, has the right environment variables, and has credentials to deploy.
+
+Third: what changed? When production breaks, you need to know what commit or release introduced the change.
+
+Fourth: can we recover? Deployment is not complete unless you know what to do when the new version is bad.
+
+That last point leads naturally into the second half of today. Containers help us package services consistently. Monitoring helps us know when production is actually broken.
+
+[~2 min]
 -->
 
 ---
